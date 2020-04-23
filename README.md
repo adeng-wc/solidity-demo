@@ -249,6 +249,37 @@
 
 - `returns (uint256 winningProposal_)`  : 定义合约返回类型
 
+- `payable`: 。如果在调用合约的function call的时候发送一些以太币，那么这些以太币就会被added 到合约的总balance上，就像刚刚开始创建合约的时候会发送一些以太币也会作为合约的balance一样。但这样发送给合约balance的要求就是这个被调用的function必须要有payable标识，不然就会抛exception啦
+
+  ```javascript
+  function bid() public payable {
+    // 参数不是必要的。因为所有的信息已经包含在了交易中。
+    // 对于能接收以太币的函数，关键字 payable 是必须的。
+  
+    // 如果拍卖已结束，撤销函数的调用。
+    require(now <= auctionEnd, "Auction already ended.");
+  
+    // 如果出价不够高，返还你的钱
+    require(msg.value > highestBid, "There already is a higher bid.");
+  
+    if (highestBid != 0) {
+      // 返还出价时，简单地直接调用 highestBidder.send(highestBid) 函数，
+      // 是有安全风险的，因为它有可能执行一个非信任合约。
+      // 更为安全的做法是让接收方自己提取金钱。
+      pendingReturns[highestBidder] += highestBid;
+    }
+    highestBidder = msg.sender;
+    highestBid = msg.value;
+    emit HighestBidIncreased(msg.sender, msg.value);
+  }
+  ```
+
+- `internal`:
+
+
+
+
+
 
 
 ### 入参修饰符
@@ -300,4 +331,16 @@
   ```
 
 - 
+
+
+
+
+
+## 特殊功能函数
+### 时间
+
+- `now` :  [详见（需要翻墙）](https://zoom-blc.com/solidity-time-logic)
+- 
+
+
 

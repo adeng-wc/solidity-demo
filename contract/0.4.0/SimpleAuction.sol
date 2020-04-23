@@ -74,7 +74,7 @@ contract SimpleAuction {
     }
 
     /// 结束拍卖，并把最高的出价发送给受益人
-    function auctionEnd() public {
+    function auctionEndFuntion() public {
         // 对于可与其他合约交互的函数（意味着它会调用其他函数或发送以太币），
         // 一个好的指导方针是将其结构分为三个阶段：
         // 1. 检查条件
@@ -93,7 +93,9 @@ contract SimpleAuction {
         ended = true;
         emit AuctionEnded(highestBidder, highestBid);
 
-        // 3. 交互
-        beneficiary.transfer(highestBid);
+        // 3. 交互. 错误demo beneficiary.transfer(highestBid);
+        // 详见 https://blog.csdn.net/Lerix/article/details/95684910
+        // 大意就是address类型被分成了address和address payable,在我的代码中，我直接声明的addr1显然只是address，需要转化一下。新代码如下：
+        address(uint160(beneficiary)).transfer(highestBid);
     }
 }
