@@ -102,6 +102,14 @@
 
 - `uint` :（256位无符号整数）
 
+- `enum`:  枚举
+
+   ```javascript
+   enum State {Created, Locked, Inactive}
+   ```
+
+   
+
 - `address` :（一个160位的值，且不允许任何算数操作，这种类型适合存储合约地址或外部人员的密钥对。）
 
    ```javascript
@@ -274,7 +282,38 @@
   }
   ```
 
-- `internal`:
+- `internal`: 这是一个 "internal" 函数， 意味着它只能在本合约（或继承合约）内被调用.
+
+- `modifier`: 使用 `modifier` 可以更便捷的校验函数的入参。 `onlyBefore` 会被用于后面的 `bid` 函数：新的函数体是由 `modifier` 本身的函数体，并用原函数体替换 `_;` 语句来组成的。
+
+  ```javascript
+  modifier onlyBefore(uint256 _time) {
+    require(now < _time);
+    // bid 方法的逻辑会在这里插入
+    _;
+  }
+  
+  modifier onlyAfter(uint256 _time) {
+    require(now > _time);
+    // auctionEnd 的逻辑会在这里插入
+    _;
+  }
+  
+  function bid(bytes32 _blindedBid) public payable onlyBefore(biddingEnd) {
+    bids[msg.sender].push(
+      Bid({blindedBid: _blindedBid, deposit: msg.value})
+    );
+  }
+  
+  function auctionEnd() public onlyAfter(revealEnd) {
+    require(!ended);
+    emit AuctionEnded(highestBidder, highestBid);
+    ended = true;
+    beneficiary.transfer(highestBid);
+  }
+  ```
+
+  
 
 
 
@@ -286,7 +325,8 @@
 
 
 
-- `memory` : 
+- `memory` :   `Memory` 变量则是临时的，当外部函数对某合约调用完成时，内存型变量即被移除。
+  - 状态变量（在函数之外声明的变量）默认为“**storage**”形式，并永久写入区块链；而在函数内部声明的变量默认是“**memory**”型的，它们函数调用结束后消失。
 - 
 
 
@@ -344,3 +384,28 @@
 
 
 
+## 特殊对象
+
+### msg
+
+- `msg.sender`
+- `msg.value` 
+
+
+
+### abi
+
+- `abi.encodePacked(value, fake, secret)`: 
+
+
+
+
+
+
+
+## 内置方法
+
+
+
+- `keccak256(value, fake, secret)`：  keccak256加密
+- 
