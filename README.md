@@ -96,15 +96,40 @@
 
 # solidity 语法
 
-## 成员变量 类型
+## 成员变量
 
-- `uint` （256位无符号整数）
+### 类型
 
-- `address` （一个160位的值，且不允许任何算数操作，这种类型适合存储合约地址或外部人员的密钥对。）
+- `uint` :（256位无符号整数）
 
-- `mapping (address => uint) public balances`  Mappings 可以看作是一个 [哈希表](https://en.wikipedia.org/wiki/Hash_table) 它会执行虚拟初始化，以使所有可能存在的键都映射到一个字节表示为全零的值。
+- `address` :（一个160位的值，且不允许任何算数操作，这种类型适合存储合约地址或外部人员的密钥对。）
 
-- `event Sent(address from, address to, uint amount);`  行声明了一个所谓的“事件（event）”.
+   ```javascript
+   // address(0)  是对象 ？
+   while (voters[to].delegate != address(0)) {
+     to = voters[to].delegate;
+   
+     // 不允许闭环委托
+     require(to != msg.sender, "Found loop in delegation.");
+   }
+   ```
+
+   
+
+- `mapping (address => uint) public balances`:  Mappings 可以看作是一个 [哈希表](https://en.wikipedia.org/wiki/Hash_table) 它会执行虚拟初始化，以使所有可能存在的键都映射到一个字节表示为全零的值。
+
+   ```javascript
+   
+   // 这声明了一个状态变量，为每个可能的地址存储一个 `Voter`。 类似一个 hash 表，key 是 address ，value 是 Voter
+   mapping(address => Voter) public voters;
+   ......
+   Voter storage sender = voters[msg.sender];
+   ......
+   ```
+
+   
+
+- `event Sent(address from, address to, uint amount);` : 行声明了一个所谓的“事件（event）”.
 
   - 它会在 `send` 函数 ` emit Sent(msg.sender, receiver, amount);` 被发出。
 
@@ -132,10 +157,147 @@
     })
     ```
 
-  - 
+- `struct`  : 结构体 
 
-## 成员变量 关键字
+   ```javascript
+    struct Voter {
+      uint weight; // 计票的权重
+      bool voted;  // 若为真，代表该人已投票
+      address delegate; // 被委托人
+      uint vote;   // 投票提案的索引
+    }
+   ```
+
+- `Proposal[] public proposals;` : 数组类型
+
+  ```javascript
+  proposals.push(Proposal({
+    name: proposalNames[i],
+    voteCount: 0
+  }));
+  ```
+
+
+
+### 修饰 关键字
 
 - `public` （关键字“public”让这些变量可以从外部读取。关键字 public 自动生成一个函数，允许你在这个合约之外访问这个状态变量的当前值。如果没有这个关键字，其他的合约没有办法访问这个变量。）
+- 
+
+
+
+## 方法
+
+### 修饰符
+
+- `constructor`:  构造函数。
+
+  ```javascript
+  constructor(uint256 _biddingTime, address _beneficiary) public {
+    chairperson = msg.sender;
+    beneficiary = _beneficiary;
+    auctionEnd = now + _biddingTime;
+  }
+  ```
+
+- `function` : 定义方法。
+
+  ```javascript
+  function mint(address receiver, uint amount) public {
+    if (msg.sender != minter) return;
+    balances[receiver] += amount;
+  }
+  ```
+
+- `public` :  可以被外部调用。
+
+- `view`:  view的作用和constant一模一样，可以读取状态变量但是不能改。
+
+  - 在Solidity中`constant`、`view`、`pure`三个函数修饰词的作用是告诉编译器，函数不改变/不读取状态变量，这样函数执行就可以不消耗gas了（是完全不消耗！），因为不需要矿工来验证。所以用好这几个关键词很重要，不言而喻，省gas就是省钱！
+
+- `pure`: pure则更为严格，pure修饰的函数不能改也不能读状态变量，否则编译通不过。
+
+  ```javascript
+  pragma solidity ^0.4.21;
+  contract constantViewPure{
+    string name;
+    uint public age;
+  
+    function constantViewPure() public{
+      name = "liushiming";
+      age = 29;
+    }
+  
+    function getAgeByConstant() public constant returns(uint){
+      age += 1;  //声明为constant，在函数体中又试图去改变状态变量的值，编译会报warning, 但是可以通过
+      return age;  // return 30, 但是！状态变量age的值不会改变，仍然为29！
+    } 
+  
+    function getAgeByView() public view returns(uint){
+      age += 1; //view和constant效果一致，编译会报warning，但是可以通过
+      return age; // return 30，但是！状态变量age的值不会改变，仍然为29！
+    }
+  
+    function getAgeByPure() public pure returns(uint){
+      return age; //编译报错！pure比constant和view都要严格，pure完全禁止读写状态变量！
+      return 1;
+    }
+  }
+  ```
+
+  
+
+- `returns (uint256 winningProposal_)`  : 定义合约返回类型
+
+
+
+### 入参修饰符
+
+
+
+- `memory` : 
+- 
+
+
+
+### 方法中对象 修饰符
+
+- `storage`:  定义了变量的存储位置。而对于`storage`的变量，数据将永远存在于区块链上。
+
+  ```javascript
+  // 传引用
+  Voter storage sender = voters[msg.sender];
+  require(!sender.voted, "You already voted.");
+  ```
+
+  
+
+
+
+## 语法
+
+### 循环
+
+- `for` : 
+- 
+
+
+
+### 特殊用户关键字
+
+- `require` : 类似于 java 中的 `assert.notnull` 。 
+
+  ```javascript
+  // 若 `require` 的第一个参数的计算结果为 `false`，
+  // 则终止执行，撤销所有对状态和以太币余额的改动。
+  // 在旧版的 EVM 中这曾经会消耗所有 gas，但现在不会了。
+  // 使用 require 来检查函数是否被正确地调用，是一个好习惯。
+  // 你也可以在 require 的第二个参数中提供一个对错误情况的解释。
+  require(
+    msg.sender == chairperson,
+    "Only chairperson can give right to vote."
+  );
+  ```
+
 - 
 
