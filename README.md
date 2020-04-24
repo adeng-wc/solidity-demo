@@ -370,7 +370,25 @@
   );
   ```
 
-- 
+- `assembly`:  内嵌汇编。内联编译在当编译器没办法得到有效率的代码时非常有用
+
+  ```javascript
+  assembly {
+    // retrieve the size of the code, this needs assembly
+    let size := extcodesize(_addr)
+    // allocate output byte array - this could also be done without assembly
+    // by using o_code = new bytes(size)
+    o_code := mload(0x40)
+    // new "memory end" including padding
+    mstore(0x40, add(o_code, and(add(add(size, 0x20), 0x1f), not(0x1f))))
+    // store length in memory
+    mstore(o_code, size)
+    // actually retrieve the code, this needs assembly
+    extcodecopy(_addr, add(o_code, 0x20), 0, size)
+  }
+  ```
+
+  
 
 
 
@@ -395,7 +413,13 @@
 
 ### abi
 
-- `abi.encodePacked(value, fake, secret)`: 
+- `abi.encodePacked(...) returns (bytes)` : 对给定参数执行 [紧打包编码](https://solidity-cn.readthedocs.io/zh/develop/abi-spec.html#abi-packed-mode) 
+- `abi.soliditySHA3`:
+- 
+
+
+
+### web3
 
 
 
@@ -408,4 +432,21 @@
 
 
 - `keccak256(value, fake, secret)`：  keccak256加密
+
+  ```javascript
+  keccak256(abi.encodePacked(msg.sender, amount, nonce, this))
+  ```
+
+  
+
+- `add`: 
+
+- `mload`: 
+
+- `ecrecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) returns (address)`:   `ecrecover`的思想是，可以计算对应于用于创建`ECDSA`签名的私钥的公钥，这两个额外的字节通常是由签名提供的。签名本身是椭圆曲线点R和S的两个（编码），而V是恢复公钥所需的两个附加位。
+
+  它返回对应于恢复的公钥（即其sha3/keccak的哈希）的地址。这意味着要实际验证签名，检查返回的地址是否等于相应的私钥应该已经签署哈希的那个地址。
+
+- `selfdestruct(msg.sender)` : 销毁合约 ， 回收剩余资金
+
 - 
